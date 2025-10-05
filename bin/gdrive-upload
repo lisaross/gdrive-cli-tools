@@ -1,0 +1,33 @@
+#!/bin/bash
+# Agent-friendly Google Drive upload script
+# Usage: gdrive-upload <file> [folder]
+
+set -e
+
+if [ $# -eq 0 ]; then
+    echo "Usage: gdrive-upload <file> [folder]"
+    echo "Examples:"
+    echo "  gdrive-upload myfile.txt"
+    echo "  gdrive-upload myfile.txt ai-projects"  
+    echo "  gdrive-upload myfile.txt ai-projects/$(basename "$PWD")"
+    exit 1
+fi
+
+FILE="$1"
+FOLDER="${2:-ai-projects/$(basename "$PWD")}"
+
+if [ ! -f "$FILE" ]; then
+    echo "❌ Error: File '$FILE' not found"
+    exit 1
+fi
+
+echo "📤 Uploading '$FILE' to Google Drive folder '$FOLDER'..."
+
+# Create folder if it doesn't exist
+rclone mkdir "lisaross:$FOLDER" 2>/dev/null || true
+
+# Upload file
+rclone copy "$FILE" "lisaross:$FOLDER/"
+
+echo "✅ Successfully uploaded '$FILE' to Google Drive/$FOLDER/"
+echo "🔗 File location: Google Drive/$FOLDER/$(basename "$FILE")"

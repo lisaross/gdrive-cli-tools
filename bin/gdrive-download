@@ -1,0 +1,30 @@
+#!/bin/bash
+# Agent-friendly Google Drive download script
+# Usage: gdrive-download <file> [folder]
+
+set -e
+
+if [ $# -eq 0 ]; then
+    echo "Usage: gdrive-download <file> [folder]"
+    echo "Examples:"
+    echo "  gdrive-download myfile.txt"
+    echo "  gdrive-download myfile.txt ai-projects"
+    echo "  gdrive-download myfile.txt ai-projects/$(basename "$PWD")"
+    exit 1
+fi
+
+FILE="$1"
+FOLDER="${2:-ai-projects/$(basename "$PWD")}"
+
+echo "📥 Downloading '$FILE' from Google Drive folder '$FOLDER'..."
+
+# Download file
+if rclone copy "lisaross:$FOLDER/$FILE" "./"; then
+    echo "✅ Successfully downloaded '$FILE' from Google Drive/$FOLDER/"
+    echo "📁 File saved to: $(pwd)/$FILE"
+else
+    echo "❌ Error: File '$FILE' not found in Google Drive/$FOLDER/"
+    echo "💡 Available files in $FOLDER:"
+    rclone ls "lisaross:$FOLDER/" 2>/dev/null || echo "   (folder not found or empty)"
+    exit 1
+fi

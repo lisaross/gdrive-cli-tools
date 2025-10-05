@@ -1,0 +1,19 @@
+#!/bin/bash
+# Agent-friendly Google Drive list script  
+# Usage: gdrive-list [folder]
+
+FOLDER="${1:-ai-projects/$(basename "$PWD")}"
+
+echo "📂 Listing files in Google Drive folder '$FOLDER':"
+echo ""
+
+if rclone ls "lisaross:$FOLDER/" 2>/dev/null; then
+    echo ""
+    echo "📁 Subdirectories:"
+    rclone lsd "lisaross:$FOLDER/" 2>/dev/null || echo "   (none)"
+else
+    echo "❌ Folder '$FOLDER' not found or empty"
+    echo ""
+    echo "💡 Available top-level folders:"
+    rclone lsd "lisaross:" | head -10
+fi
