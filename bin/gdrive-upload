@@ -4,17 +4,30 @@
 
 set -e
 
+# Configuration
+REMOTE_NAME="${GDRIVE_REMOTE:-lisaross}"
+
 if [ $# -eq 0 ]; then
     echo "Usage: gdrive-upload <file> [folder]"
     echo "Examples:"
     echo "  gdrive-upload myfile.txt"
     echo "  gdrive-upload myfile.txt ai-projects"  
     echo "  gdrive-upload myfile.txt ai-projects/$(basename "$PWD")"
+    echo ""
+    echo "Environment variables:"
+    echo "  GDRIVE_REMOTE - rclone remote name (default: lisaross)"
     exit 1
 fi
 
 FILE="$1"
-FOLDER="${2:-ai-projects/$(basename "$PWD")}"
+
+# Check for .gdrive-project file for custom project name
+if [ -f .gdrive-project ]; then
+    PROJECT_NAME=$(cat .gdrive-project | tr -d '\n\r')
+    FOLDER="${2:-ai-projects/$PROJECT_NAME}"
+else
+    FOLDER="${2:-ai-projects/$(basename "$PWD")}"
+fi
 
 if [ ! -f "$FILE" ]; then
     echo "❌ Error: File '$FILE' not found"
@@ -24,10 +37,10 @@ fi
 echo "📤 Uploading '$FILE' to Google Drive folder '$FOLDER'..."
 
 # Create folder if it doesn't exist
-rclone mkdir "lisaross:$FOLDER" 2>/dev/null || true
+rclone mkdir "$REMOTE_NAME:$FOLDER" 2>/dev/null || true
 
 # Upload file
-rclone copy "$FILE" "lisaross:$FOLDER/"
+rclone copy "$FILE" "$REMOTE_NAME:$FOLDER/"
 
 echo "✅ Successfully uploaded '$FILE' to Google Drive/$FOLDER/"
 echo "🔗 File location: Google Drive/$FOLDER/$(basename "$FILE")"

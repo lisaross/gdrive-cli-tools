@@ -4,27 +4,40 @@
 
 set -e
 
+# Configuration
+REMOTE_NAME="${GDRIVE_REMOTE:-lisaross}"
+
 if [ $# -eq 0 ]; then
     echo "Usage: gdrive-download <file> [folder]"
     echo "Examples:"
     echo "  gdrive-download myfile.txt"
     echo "  gdrive-download myfile.txt ai-projects"
     echo "  gdrive-download myfile.txt ai-projects/$(basename "$PWD")"
+    echo ""
+    echo "Environment variables:"
+    echo "  GDRIVE_REMOTE - rclone remote name (default: lisaross)"
     exit 1
 fi
 
 FILE="$1"
-FOLDER="${2:-ai-projects/$(basename "$PWD")}"
+
+# Check for .gdrive-project file for custom project name
+if [ -f .gdrive-project ]; then
+    PROJECT_NAME=$(cat .gdrive-project | tr -d '\n\r')
+    FOLDER="${2:-ai-projects/$PROJECT_NAME}"
+else
+    FOLDER="${2:-ai-projects/$(basename "$PWD")}"
+fi
 
 echo "📥 Downloading '$FILE' from Google Drive folder '$FOLDER'..."
 
 # Download file
-if rclone copy "lisaross:$FOLDER/$FILE" "./"; then
+if rclone copy "$REMOTE_NAME:$FOLDER/$FILE" "./"; then
     echo "✅ Successfully downloaded '$FILE' from Google Drive/$FOLDER/"
     echo "📁 File saved to: $(pwd)/$FILE"
 else
     echo "❌ Error: File '$FILE' not found in Google Drive/$FOLDER/"
     echo "💡 Available files in $FOLDER:"
-    rclone ls "lisaross:$FOLDER/" 2>/dev/null || echo "   (folder not found or empty)"
+    rclone ls "$REMOTE_NAME:$FOLDER/" 2>/dev/null || echo "   (folder not found or empty)"
     exit 1
 fi
